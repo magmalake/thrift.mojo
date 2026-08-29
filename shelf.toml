@@ -1,0 +1,6 @@
+name = "thrift-mojo"
+version = "0.1.0"
+description = "Pure-Mojo Apache Thrift serialization — TCompactProtocol, TBinaryProtocol, and the Parquet metadata structs"
+tags = ["thrift", "parquet", "iceberg", "data-lake", "serialization"]
+# other tins this one depends on; omit if none
+tins = []

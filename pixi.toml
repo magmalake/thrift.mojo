@@ -1,0 +1,50 @@
+[workspace]
+authors = ["Marius S <39998+winding-lines@users.noreply.github.com>"]
+channels = ["https://conda.modular.com/max-nightly", "conda-forge"]
+name = "thrift.mojo"
+version = "0.1.0"
+description = "Pure-Mojo Apache Thrift serialization (TCompactProtocol, TBinaryProtocol) plus the Parquet metadata structs."
+preview = ["pixi-build"]
+platforms = ["osx-arm64", "linux-64"]
+
+[tasks]
+# Pure Mojo, stdlib only — consumers just `-I ../thrift.mojo/src`.
+test = { cmd = "mkdir -p build && mojo build tests/test_thrift.mojo -I src -I tests -o build/thrift-test && ./build/thrift-test" }
+bench = { cmd = "mkdir -p build && mojo build bench/bench_thrift.mojo -I src -o build/thrift-bench && ./build/thrift-bench" }
+cli = { cmd = "mkdir -p build && mojo build src/main.mojo -I src -o build/thrift-mojo && ./build/thrift-mojo" }
+# Regenerate tests/fixtures/*.parquet + the pyarrow oracle JSON (needs `uv`).
+fixtures = { cmd = "bash tools/gen_fixtures.sh" }
+# Regenerate src/thrift/parquet_types.mojo from spec/parquet.thrift.
+gen-types = { cmd = "python3 tools/gen_types.py spec/parquet.thrift src/thrift/parquet_types.mojo" }
+
+# ── pixi-build: consumable as a pixi source dependency ──────────────────────
+# Conda package name is thrift-mojo; the Mojo import stays `from thrift import …`.
+[package]
+name = "thrift-mojo"
+version = "0.1.0"
+
+[package.build]
+backend = { name = "pixi-build-mojo", version = "0.*" }
+
+[package.build.config.pkg]
+path = "src/thrift"
+name = "thrift"
+
+[package.host-dependencies]
+mojo-compiler = "==1.0.0"
+
+[package.build-dependencies]
+mojo-compiler = "==1.0.0"
+
+[package.run-dependencies]
+mojo-compiler = ">=1.0.0,<2"
+
+[feature.nightly.dependencies]
+modular = ">=26.6.0.dev2026082605,<27"
+
+[feature.stable.dependencies]
+mojo-compiler = "==1.0.0"
+
+[environments]
+default = ["nightly"]
+stable = ["stable"]
