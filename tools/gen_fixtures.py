@@ -311,10 +311,13 @@ def main():
             size = os.path.getsize(os.path.join(out_dir, name))
             fh.write("- **`%s`** (%d bytes) — %s.\n" % (name, size, what))
         fh.write(
-            "\n`<name>.oracle.json` next to each file is"
-            " `pyarrow.parquet.ParquetFile(...).metadata` dumped by"
-            " `tools/oracle_pyarrow.py`; the Mojo tests assert our decoded"
-            " `FileMetaData` matches it field by field.\n"
+            "\n`<name>.oracle.txt` next to each file is the canonical"
+            " fact dump written by `tools/oracle_pyarrow.py`, which decodes"
+            " the footer with the Apache Thrift compiler's own generated"
+            " Python bindings and cross-checks every fact against pyarrow"
+            " before writing it. `<name>.oracle.json` is the same metadata"
+            " for a human to read. The Mojo tests reproduce the `.txt` from"
+            " our own decode, line for line.\n"
         )
     print("wrote %d fixtures to %s" % (len(PROVENANCE), out_dir))
 
