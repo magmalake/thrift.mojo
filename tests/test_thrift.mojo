@@ -34,6 +34,31 @@ from thrift.protocol import (
     zigzag_i64,
 )
 
+from thrift.parquet_footer import (
+    FOOTER_TRAILER_SIZE,
+    footer_length,
+    read_footer,
+    read_footer_bytes,
+    read_page_header,
+    read_parquet_file,
+    write_footer,
+    write_footer_trailer,
+)
+from thrift.parquet_types import (
+    BloomFilterHeader,
+    ColumnIndex,
+    CompressionCodec,
+    ConvertedType,
+    Encoding,
+    FileMetaData,
+    LogicalType,
+    OffsetIndex,
+    PageType,
+    SchemaElement,
+    Type,
+)
+from parquet_expect import oracle_text
+
 from vectors import (
     VECTOR_COUNT,
     binary_hex,
@@ -574,6 +599,530 @@ def test_empty_collections() raises:
     var r = TCompactProtocolReader(Span(buf))
     r.skip(T_STRUCT)
     assert_equal(r.remaining(), 0)
+    _ = buf^
+
+
+# ── Parquet: real files, checked against Apache Thrift + pyarrow ───────────
+
+
+def fixture_names() -> List[String]:
+    return [
+        String("primitives"),
+        String("logical"),
+        String("extension"),
+        String("nested"),
+        String("encodings"),
+        String("codecs"),
+        String("pageindex"),
+        String("nostats"),
+        String("v2pages"),
+    ]
+
+
+def fixture_path(name: StringSlice) -> String:
+    return String("tests/fixtures/", name, ".parquet")
+
+
+def read_text(path: StringSlice) raises -> String:
+    with open(String(path), "r") as f:
+        return f.read()
+
+
+def diff_report(name: StringSlice, got: String, want: String) raises -> String:
+    var gl = got.split("\n")
+    var wl = want.split("\n")
+    var out = String("fixture '", name, "' does not match its oracle\n")
+    var n = len(gl) if len(gl) < len(wl) else len(wl)
+    var shown = 0
+    for i in range(n):
+        if gl[i] != wl[i]:
+            out += String("  line ", i + 1, "\n    got  ", gl[i], "\n    want ", wl[i], "\n")
+            shown += 1
+            if shown >= 8:
+                break
+    if len(gl) != len(wl):
+        out += String("  line counts differ: ", len(gl), " vs ", len(wl), "\n")
+    return out^
+
+
+def test_fixtures_match_the_oracle() raises:
+    """Our decode must reproduce the Apache-Thrift-derived oracle exactly."""
+    for name in fixture_names():
+        var path = fixture_path(name)
+        var data = read_parquet_file(path)
+        var meta = read_footer(Span(data))
+        var got = oracle_text(meta)
+        var want = read_text(String(path, ".oracle.txt"))
+        if got != want:
+            raise Error(diff_report(name, got, want))
+        _ = data^
+
+
+def test_footer_round_trip_is_semantically_identical() raises:
+    """write_footer(read_footer(x)) must decode back to the same metadata."""
+    for name in fixture_names():
+        var path = fixture_path(name)
+        var data = read_parquet_file(path)
+        var meta = read_footer(Span(data))
+        var before = oracle_text(meta)
+        var body = write_footer(meta)
+        var again = read_footer_bytes(Span(body))
+        var after = oracle_text(again)
+        if before != after:
+            raise Error(diff_report(name, after, before))
+        # And once more, to prove the re-serialisation is a fixed point.
+        var body2 = write_footer(again)
+        assert_equal(
+            hex_of(Span(body)),
+            hex_of(Span(body2)),
+            String("re-serialising ", name, " is not idempotent"),
+        )
+        _ = data^
+        _ = body^
+        _ = body2^
+
+
+def test_footer_round_trip_through_a_whole_file() raises:
+    """Rebuild the 8-byte trailer too and re-read the file end to end."""
+    for name in fixture_names():
+        var path = fixture_path(name)
+        var data = read_parquet_file(path)
+        var meta = read_footer(Span(data))
+        var body = write_footer(meta)
+        var rebuilt = List[UInt8]()
+        var keep = len(data) - FOOTER_TRAILER_SIZE - footer_length(Span(data))
+        rebuilt.extend(Span(data)[0:keep])
+        rebuilt.extend(Span(body))
+        write_footer_trailer(rebuilt, len(body))
+        var again = read_footer(Span(rebuilt))
+        assert_equal(oracle_text(again), oracle_text(meta))
+        _ = data^
+        _ = body^
+        _ = rebuilt^
+
+
+def test_page_headers_of_every_page_in_every_fixture() raises:
+    """Walk every page of every chunk and reconcile with the chunk metadata."""
+    var total_pages = 0
+    for name in fixture_names():
+        var path = fixture_path(name)
+        var data = read_parquet_file(path)
+        var meta = read_footer(Span(data))
+        for r in range(len(meta.row_groups)):
+            ref rg = meta.row_groups[r]
+            for j in range(len(rg.columns)):
+                ref cm = rg.columns[j].meta_data.value()
+                var start = cm.data_page_offset
+                if cm.dictionary_page_offset:
+                    var d = cm.dictionary_page_offset.value()
+                    if d < start:
+                        start = d
+                var pos = Int(start)
+                var stop = Int(start + cm.total_compressed_size)
+                var data_values = Int64(0)
+                var n_data = 0
+                var n_dict = 0
+                while pos < stop:
+                    var page = read_page_header(Span(data), pos)
+                    total_pages += 1
+                    var header_len = page[1]
+                    ref h = page[0]
+                    if h.type_ == PageType.DICTIONARY_PAGE:
+                        n_dict += 1
+                        assert_true(
+                            Bool(h.dictionary_page_header),
+                            String("dictionary page without its header in ", name),
+                        )
+                    elif h.type_ == PageType.DATA_PAGE:
+                        n_data += 1
+                        ref dh = h.data_page_header.value()
+                        data_values += Int64(dh.num_values)
+                    elif h.type_ == PageType.DATA_PAGE_V2:
+                        n_data += 1
+                        ref dh2 = h.data_page_header_v2.value()
+                        data_values += Int64(dh2.num_values)
+                    assert_true(
+                        h.compressed_page_size >= 0
+                        and h.uncompressed_page_size >= 0,
+                        String("negative page size in ", name),
+                    )
+                    pos += header_len + Int(h.compressed_page_size)
+                assert_equal(
+                    pos,
+                    stop,
+                    String(
+                        "pages of ", name, " rg", r, " col", j,
+                        " do not tile total_compressed_size",
+                    ),
+                )
+                assert_equal(
+                    data_values,
+                    cm.num_values,
+                    String(
+                        "data page num_values in ", name, " rg", r, " col", j,
+                        " do not sum to the chunk's num_values",
+                    ),
+                )
+                assert_equal(
+                    n_dict,
+                    1 if cm.dictionary_page_offset else 0,
+                    String("dictionary page count in ", name),
+                )
+                assert_true(n_data > 0, String("no data pages in ", name))
+        _ = data^
+    assert_true(total_pages >= 100, String("only saw ", total_pages, " pages"))
+
+
+def page_kind(t: PageType) raises -> String:
+    """DATA_PAGE and DATA_PAGE_V2 count as one kind here.
+
+    parquet-cpp records `page_type = DATA_PAGE` in `encoding_stats` even for
+    a chunk it wrote as v2 pages, so comparing the raw enum would fail on a
+    writer quirk rather than on anything we decoded wrong.
+    """
+    if t == PageType.DATA_PAGE or t == PageType.DATA_PAGE_V2:
+        return String("DATA")
+    return t.name()
+
+
+def test_page_counts_match_encoding_stats() raises:
+    """`ColumnMetaData.encoding_stats` must agree with the pages on disk."""
+    var checked = 0
+    for name in fixture_names():
+        var path = fixture_path(name)
+        var data = read_parquet_file(path)
+        var meta = read_footer(Span(data))
+        for r in range(len(meta.row_groups)):
+            ref rg = meta.row_groups[r]
+            for j in range(len(rg.columns)):
+                ref cm = rg.columns[j].meta_data.value()
+                if not cm.encoding_stats:
+                    continue
+                ref stats = cm.encoding_stats.value()
+                var start = cm.data_page_offset
+                if cm.dictionary_page_offset:
+                    var d = cm.dictionary_page_offset.value()
+                    if d < start:
+                        start = d
+                var pos = Int(start)
+                var stop = Int(start + cm.total_compressed_size)
+                var keys = List[String]()
+                var counts = List[Int]()
+                while pos < stop:
+                    var page = read_page_header(Span(data), pos)
+                    ref h = page[0]
+                    var enc = Encoding(0)
+                    if h.data_page_header:
+                        enc = h.data_page_header.value().encoding
+                    elif h.data_page_header_v2:
+                        enc = h.data_page_header_v2.value().encoding
+                    elif h.dictionary_page_header:
+                        enc = h.dictionary_page_header.value().encoding
+                    var key = String(page_kind(h.type_), "/", enc.name())
+                    var found = False
+                    for k in range(len(keys)):
+                        if keys[k] == key:
+                            counts[k] += 1
+                            found = True
+                            break
+                    if not found:
+                        keys.append(key^)
+                        counts.append(1)
+                    pos += page[1] + Int(h.compressed_page_size)
+                assert_equal(
+                    len(stats),
+                    len(keys),
+                    String("encoding_stats arity in ", name),
+                )
+                for s in range(len(stats)):
+                    var key = String(
+                        page_kind(stats[s].page_type), "/",
+                        stats[s].encoding.name(),
+                    )
+                    var got = -1
+                    for k in range(len(keys)):
+                        if keys[k] == key:
+                            got = counts[k]
+                            break
+                    assert_equal(
+                        got,
+                        Int(stats[s].count),
+                        String("encoding_stats ", key, " in ", name),
+                    )
+                    checked += 1
+        _ = data^
+    assert_true(checked > 0, "no encoding_stats were checked")
+
+
+def test_page_index_structures() raises:
+    """OffsetIndex and ColumnIndex decode and describe the same pages."""
+    var path = fixture_path("pageindex")
+    var data = read_parquet_file(path)
+    var meta = read_footer(Span(data))
+    var chunks_with_index = 0
+    for r in range(len(meta.row_groups)):
+        ref rg = meta.row_groups[r]
+        for j in range(len(rg.columns)):
+            ref cc = rg.columns[j]
+            if not cc.offset_index_offset or not cc.column_index_offset:
+                continue
+            chunks_with_index += 1
+            var oi_r = TCompactProtocolReader(
+                Span(data), Int(cc.offset_index_offset.value())
+            )
+            var oi = OffsetIndex()
+            oi.read(oi_r)
+            assert_equal(
+                oi_r.pos - Int(cc.offset_index_offset.value()),
+                Int(cc.offset_index_length.value()),
+                "OffsetIndex length disagrees with the ColumnChunk",
+            )
+            var ci_r = TCompactProtocolReader(
+                Span(data), Int(cc.column_index_offset.value())
+            )
+            var ci = ColumnIndex()
+            ci.read(ci_r)
+            assert_equal(
+                ci_r.pos - Int(cc.column_index_offset.value()),
+                Int(cc.column_index_length.value()),
+                "ColumnIndex length disagrees with the ColumnChunk",
+            )
+            assert_equal(
+                len(ci.null_pages),
+                len(oi.page_locations),
+                "ColumnIndex and OffsetIndex disagree on the page count",
+            )
+            assert_equal(len(ci.min_values), len(ci.null_pages))
+            assert_equal(len(ci.max_values), len(ci.null_pages))
+            # Every page location must point at a real page header whose
+            # size matches.
+            ref cm = cc.meta_data.value()
+            var n_data = 0
+            var pos = Int(cm.data_page_offset)
+            var stop = Int(cm.data_page_offset + cm.total_compressed_size)
+            if cm.dictionary_page_offset:
+                pos = Int(cm.dictionary_page_offset.value())
+                stop = pos + Int(cm.total_compressed_size)
+            var rows = Int64(0)
+            while pos < stop:
+                var page = read_page_header(Span(data), pos)
+                ref h = page[0]
+                if h.type_ != PageType.DICTIONARY_PAGE:
+                    assert_equal(
+                        Int64(oi.page_locations[n_data].offset),
+                        Int64(pos),
+                        "page location offset",
+                    )
+                    assert_equal(
+                        Int64(oi.page_locations[n_data].compressed_page_size),
+                        Int64(page[1] + Int(h.compressed_page_size)),
+                        "page location size",
+                    )
+                    assert_equal(
+                        oi.page_locations[n_data].first_row_index,
+                        rows,
+                        "page location first_row_index",
+                    )
+                    rows += Int64(h.data_page_header.value().num_values)
+                    n_data += 1
+                pos += page[1] + Int(h.compressed_page_size)
+            assert_equal(n_data, len(oi.page_locations))
+    assert_true(chunks_with_index > 0, "no page index found in the fixture")
+    _ = data^
+
+
+def test_bloom_filter_header_if_present() raises:
+    var found = 0
+    for name in fixture_names():
+        var path = fixture_path(name)
+        var data = read_parquet_file(path)
+        var meta = read_footer(Span(data))
+        for r in range(len(meta.row_groups)):
+            ref rg = meta.row_groups[r]
+            for j in range(len(rg.columns)):
+                ref cm = rg.columns[j].meta_data.value()
+                if not cm.bloom_filter_offset:
+                    continue
+                found += 1
+                var r2 = TCompactProtocolReader(
+                    Span(data), Int(cm.bloom_filter_offset.value())
+                )
+                var bh = BloomFilterHeader()
+                bh.read(r2)
+                assert_true(bh.numBytes > 0, "empty bloom filter")
+                assert_true(Bool(bh.algorithm.BLOCK), "unexpected bloom algorithm")
+                assert_true(Bool(bh.hash.XXHASH), "unexpected bloom hash")
+                assert_true(
+                    Bool(bh.compression.UNCOMPRESSED),
+                    "unexpected bloom compression",
+                )
+        _ = data^
+    assert_true(
+        found > 0,
+        "no fixture carries a bloom filter — regenerate them with a pyarrow"
+        " that supports bloom_filter_options",
+    )
+
+
+# ── footer framing errors ──────────────────────────────────────────────────
+
+
+def test_footer_rejects_short_file() raises:
+    var buf: List[UInt8] = [80, 65, 82, 49]
+    with assert_raises(contains="too small"):
+        _ = read_footer(Span(buf))
+    _ = buf^
+
+
+def test_footer_rejects_bad_magic() raises:
+    var data = read_parquet_file(fixture_path("primitives"))
+    var bad = data.copy()
+    bad[len(bad) - 1] = UInt8(88)
+    with assert_raises(contains="bad trailing magic"):
+        _ = read_footer(Span(bad))
+    var bad2 = data.copy()
+    bad2[0] = UInt8(88)
+    with assert_raises(contains="bad leading magic"):
+        _ = read_footer(Span(bad2))
+    _ = data^
+    _ = bad^
+    _ = bad2^
+
+
+def test_footer_rejects_encrypted() raises:
+    var data = read_parquet_file(fixture_path("primitives"))
+    var enc = data.copy()
+    # PARE, both ends.
+    enc[len(enc) - 1] = UInt8(69)
+    with assert_raises(contains="encrypted footer unsupported"):
+        _ = read_footer(Span(enc))
+    _ = data^
+    _ = enc^
+
+
+def test_footer_rejects_impossible_length() raises:
+    var data = read_parquet_file(fixture_path("primitives"))
+    var bad = data.copy()
+    var base = len(bad) - FOOTER_TRAILER_SIZE
+    bad[base] = UInt8(0xFF)
+    bad[base + 1] = UInt8(0xFF)
+    bad[base + 2] = UInt8(0xFF)
+    bad[base + 3] = UInt8(0x7F)
+    with assert_raises(contains="does not fit"):
+        _ = read_footer(Span(bad))
+    _ = data^
+    _ = bad^
+
+
+def test_truncated_footer_body_raises() raises:
+    var data = read_parquet_file(fixture_path("extension"))
+    var n = footer_length(Span(data))
+    var start = len(data) - FOOTER_TRAILER_SIZE - n
+    for cut in range(1, n):
+        var part = List[UInt8]()
+        part.extend(Span(data)[start : start + cut])
+        var raised = False
+        try:
+            _ = read_footer_bytes(Span(part))
+        except:
+            raised = True
+        assert_true(raised, String("footer prefix of ", cut, " bytes decoded"))
+        _ = part^
+    _ = data^
+
+
+# ── generated struct behaviour ─────────────────────────────────────────────
+
+
+def test_required_field_missing_raises() raises:
+    var w = TCompactProtocolWriter()
+    w.write_struct_begin()
+    w.write_field_begin(T_I32, 1)
+    w.write_i32(Int32(2))
+    w.write_field_end()
+    w.write_field_stop()
+    w.write_struct_end()
+    var buf = w^.take()
+    var r = TCompactProtocolReader(Span(buf))
+    var meta = FileMetaData()
+    with assert_raises(contains="missing required field"):
+        meta.read(r)
+    _ = buf^
+
+
+def test_unknown_fields_are_skipped() raises:
+    """A FileMetaData with a field id from the future still decodes."""
+    var meta = FileMetaData()
+    meta.version = 2
+    meta.num_rows = 7
+    var se = SchemaElement()
+    se.name = String("schema")
+    meta.schema.append(se^)
+    var body = write_footer(meta)
+    # Splice an unknown struct-typed field 99 in before the stop byte.
+    var spliced = List[UInt8]()
+    spliced.extend(Span(body)[0 : len(body) - 1])
+    var w = TCompactProtocolWriter()
+    w.write_struct_begin()
+    w.write_field_begin(T_STRUCT, 99)
+    w.write_struct_begin()
+    w.write_field_begin(T_LIST, 1)
+    w.write_list_begin(T_DOUBLE, 2)
+    w.write_double(1.0)
+    w.write_double(2.0)
+    w.write_list_end()
+    w.write_field_end()
+    w.write_field_stop()
+    w.write_struct_end()
+    w.write_field_end()
+    w.write_field_stop()
+    w.write_struct_end()
+    var tail = w^.take()
+    spliced.extend(Span(tail))
+    var back = read_footer_bytes(Span(spliced))
+    assert_equal(back.num_rows, Int64(7))
+    assert_equal(back.schema[0].name, String("schema"))
+    _ = body^
+    _ = tail^
+    _ = spliced^
+
+
+def test_union_requires_exactly_one_member() raises:
+    var w = TCompactProtocolWriter()
+    w.write_struct_begin()
+    w.write_field_stop()
+    w.write_struct_end()
+    var buf = w^.take()
+    var r = TCompactProtocolReader(Span(buf))
+    var lt = LogicalType()
+    with assert_raises(contains="exactly one member"):
+        lt.read(r)
+    _ = buf^
+
+
+def test_enum_names_and_open_values() raises:
+    assert_equal(Type.BOOLEAN.name(), String("BOOLEAN"))
+    assert_equal(Type.FIXED_LEN_BYTE_ARRAY.name(), String("FIXED_LEN_BYTE_ARRAY"))
+    assert_equal(CompressionCodec.LZ4_RAW.name(), String("LZ4_RAW"))
+    assert_equal(Encoding.BYTE_STREAM_SPLIT.name(), String("BYTE_STREAM_SPLIT"))
+    assert_equal(PageType.DATA_PAGE_V2.name(), String("DATA_PAGE_V2"))
+    assert_equal(ConvertedType.UTF8.name(), String("UTF8"))
+    # An enum value the IDL does not define round-trips rather than raising.
+    assert_equal(CompressionCodec(99).name(), String("CompressionCodec(99)"))
+
+
+def test_struct_round_trip_over_binary_protocol_too() raises:
+    """The generated code is protocol-agnostic; prove it on TBinaryProtocol."""
+    var data = read_parquet_file(fixture_path("nested"))
+    var meta = read_footer(Span(data))
+    var w = TBinaryProtocolWriter()
+    meta.write(w)
+    var buf = w^.take()
+    var r = TBinaryProtocolReader(Span(buf))
+    var back = FileMetaData()
+    back.read(r)
+    assert_equal(oracle_text(back), oracle_text(meta))
+    _ = data^
     _ = buf^
 
 

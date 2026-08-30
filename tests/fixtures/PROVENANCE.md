@@ -10,6 +10,6 @@ Written by `tools/gen_fixtures.py` with pyarrow 25.0.1 (`pixi run fixtures`). Ea
 - **`codecs.parquet`** (2611 bytes) — one column per compression codec: none, snappy, gzip, zstd, lz4, brotli.
 - **`pageindex.parquet`** (5337 bytes) — three row groups, page index (OffsetIndex + ColumnIndex) written, small pages so several page headers per chunk.
 - **`nostats.parquet`** (2435 bytes) — statistics disabled and no page index — the optional-field-absent path.
-- **`v2pages.parquet`** (2886 bytes) — data page v2 headers (DataPageHeaderV2) over two row groups, zstd (this pyarrow cannot write bloom filters).
+- **`v2pages.parquet`** (3058 bytes) — data page v2 headers (DataPageHeaderV2) over two row groups, zstd, and a bloom filter on `k` (BloomFilterHeader on disk).
 
 `<name>.oracle.json` next to each file is `pyarrow.parquet.ParquetFile(...).metadata` dumped by `tools/oracle_pyarrow.py`; the Mojo tests assert our decoded `FileMetaData` matches it field by field.

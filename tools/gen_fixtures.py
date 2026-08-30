@@ -278,14 +278,16 @@ def main():
         data_page_size=512,
         write_statistics=True,
     )
+    # `bloom_filter_options` is a {column: {ndv, fpp}} dict on recent pyarrow;
+    # older versions do not have the parameter at all.
     try:
         write(
             out_dir,
             "v2pages.parquet",
             wide_table(140),
             "data page v2 headers (DataPageHeaderV2) over two row groups,"
-            " zstd, plus a bloom filter",
-            write_bloom_filter=["k"],
+            " zstd, and a bloom filter on `k` (BloomFilterHeader on disk)",
+            bloom_filter_options={"k": {"ndv": 140, "fpp": 0.05}},
             **v2_kw,
         )
     except TypeError:
