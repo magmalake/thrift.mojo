@@ -301,6 +301,32 @@ spec/parquet.thrift: 8 enums, 53 structs, 8 unions -> src/thrift/parquet_types.m
 The IDL comments become Mojo docstrings, so the generated file carries
 Parquet's own documentation for every field.
 
+## Using it from another tin
+
+`parquet.mojo` and anything else in magmalake reaches everything through the
+package root:
+
+```mojo
+from thrift import (
+    # protocols
+    TCompactProtocolReader, TCompactProtocolWriter,
+    TBinaryProtocolReader, TBinaryProtocolWriter,
+    TProtocolReader, TProtocolWriter,
+    T_STOP, T_STRUCT, T_LIST, T_I32, type_name,
+    # footer and page headers
+    read_parquet_file, read_footer, read_footer_bytes, footer_length,
+    read_page_header, write_footer, write_footer_trailer,
+    # metadata structs — all 69 of them are re-exported
+    FileMetaData, RowGroup, ColumnChunk, ColumnMetaData, SchemaElement,
+    Statistics, PageHeader, OffsetIndex, ColumnIndex, BloomFilterHeader,
+    Type, Encoding, CompressionCodec, PageType, LogicalType, ConvertedType,
+    FieldRepetitionType,
+)
+```
+
+Submodules are `thrift.protocol`, `thrift.parquet_types` and
+`thrift.parquet_footer` if a narrower import is wanted.
+
 ## Install
 
 As a pixi source dependency:
