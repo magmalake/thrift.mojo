@@ -184,7 +184,7 @@ struct ConvertedType(Copyable, Defaultable, Equatable, ImplicitlyCopyable, Movab
 
 
 struct FieldRepetitionType(Copyable, Defaultable, Equatable, ImplicitlyCopyable, Movable, Writable):
-    """Representation of Schemas"""
+    """Representation of Schemas."""
 
     var value: Int32
 
@@ -220,7 +220,7 @@ struct FieldRepetitionType(Copyable, Defaultable, Equatable, ImplicitlyCopyable,
 
 
 struct EdgeInterpolationAlgorithm(Copyable, Defaultable, Equatable, ImplicitlyCopyable, Movable, Writable):
-    """Edge interpolation algorithm for Geography logical type"""
+    """Edge interpolation algorithm for Geography logical type."""
 
     var value: Int32
 
@@ -692,7 +692,7 @@ struct BoundingBox(Copyable, Defaultable, Movable):
 
 
 struct GeospatialStatistics(Copyable, Defaultable, Movable):
-    """Statistics specific to Geometry and Geography logical types"""
+    """Statistics specific to Geometry and Geography logical types."""
 
     var bbox: Optional[BoundingBox]
     var geospatial_types: Optional[List[Int32]]
@@ -906,7 +906,7 @@ struct Statistics(Copyable, Defaultable, Movable):
 
 
 struct StringType(Copyable, Defaultable, Movable):
-    """Empty structs to use as logical type annotations"""
+    """Empty structs to use as logical type annotations."""
 
     var _empty: Bool
     """This struct has no fields; it exists as a union tag."""
@@ -939,7 +939,7 @@ struct StringType(Copyable, Defaultable, Movable):
 
 
 struct UUIDType(Copyable, Defaultable, Movable):
-    """allowed for BYTE_ARRAY, must be encoded with UTF-8"""
+    """Allowed for BYTE_ARRAY, must be encoded with UTF-8."""
 
     var _empty: Bool
     """This struct has no fields; it exists as a union tag."""
@@ -972,7 +972,7 @@ struct UUIDType(Copyable, Defaultable, Movable):
 
 
 struct MapType(Copyable, Defaultable, Movable):
-    """allowed for FIXED[16], must be encoded as raw UUID bytes"""
+    """Allowed for FIXED[16], must be encoded as raw UUID bytes."""
 
     var _empty: Bool
     """This struct has no fields; it exists as a union tag."""
@@ -1005,7 +1005,7 @@ struct MapType(Copyable, Defaultable, Movable):
 
 
 struct ListType(Copyable, Defaultable, Movable):
-    """see LogicalTypes.md"""
+    """See LogicalTypes.md."""
 
     var _empty: Bool
     """This struct has no fields; it exists as a union tag."""
@@ -1038,7 +1038,7 @@ struct ListType(Copyable, Defaultable, Movable):
 
 
 struct EnumType(Copyable, Defaultable, Movable):
-    """see LogicalTypes.md"""
+    """See LogicalTypes.md."""
 
     var _empty: Bool
     """This struct has no fields; it exists as a union tag."""
@@ -1071,7 +1071,7 @@ struct EnumType(Copyable, Defaultable, Movable):
 
 
 struct DateType(Copyable, Defaultable, Movable):
-    """allowed for BYTE_ARRAY, must be encoded with UTF-8"""
+    """Allowed for BYTE_ARRAY, must be encoded with UTF-8."""
 
     var _empty: Bool
     """This struct has no fields; it exists as a union tag."""
@@ -1104,7 +1104,7 @@ struct DateType(Copyable, Defaultable, Movable):
 
 
 struct Float16Type(Copyable, Defaultable, Movable):
-    """allowed for INT32"""
+    """Allowed for INT32."""
 
     var _empty: Bool
     """This struct has no fields; it exists as a union tag."""
@@ -1235,7 +1235,7 @@ struct DecimalType(Copyable, Defaultable, Movable):
 
 
 struct MilliSeconds(Copyable, Defaultable, Movable):
-    """Time units for logical types"""
+    """Time units for logical types."""
 
     var _empty: Bool
     """This struct has no fields; it exists as a union tag."""
@@ -1410,7 +1410,7 @@ struct TimeUnit(Copyable, Defaultable, Movable):
 
 
 struct TimestampType(Copyable, Defaultable, Movable):
-    """Timestamp logical type annotation Allowed for physical types: INT64
+    """Timestamp logical type annotation Allowed for physical types: INT64.
     """
 
     var isAdjustedToUTC: Bool
@@ -1467,7 +1467,7 @@ struct TimestampType(Copyable, Defaultable, Movable):
 
 struct TimeType(Copyable, Defaultable, Movable):
     """Time logical type annotation Allowed for physical types: INT32
-    (millis), INT64 (micros, nanos)
+    (millis), INT64 (micros, nanos).
     """
 
     var isAdjustedToUTC: Bool
@@ -1524,7 +1524,7 @@ struct TimeType(Copyable, Defaultable, Movable):
 
 struct IntType(Copyable, Defaultable, Movable):
     """Integer logical type annotation bitWidth must be 8, 16, 32, or 64.
-    Allowed for physical types: INT32, INT64
+    Allowed for physical types: INT32, INT64.
     """
 
     var bitWidth: Int8
@@ -1581,7 +1581,7 @@ struct IntType(Copyable, Defaultable, Movable):
 
 struct JsonType(Copyable, Defaultable, Movable):
     """Embedded JSON logical type annotation Allowed for physical types:
-    BYTE_ARRAY
+    BYTE_ARRAY.
     """
 
     var _empty: Bool
@@ -1616,7 +1616,7 @@ struct JsonType(Copyable, Defaultable, Movable):
 
 struct BsonType(Copyable, Defaultable, Movable):
     """Embedded BSON logical type annotation Allowed for physical types:
-    BYTE_ARRAY
+    BYTE_ARRAY.
     """
 
     var _empty: Bool
@@ -1650,7 +1650,7 @@ struct BsonType(Copyable, Defaultable, Movable):
 
 
 struct VariantType(Copyable, Defaultable, Movable):
-    """Embedded Variant logical type annotation"""
+    """Embedded Variant logical type annotation."""
 
     var specification_version: Optional[Int8]
 
@@ -1847,39 +1847,39 @@ struct LogicalType(Copyable, Defaultable, Movable):
     """
 
     var STRING: Optional[StringType]
-    """use ConvertedType UTF8"""
+    """Use ConvertedType UTF8."""
     var MAP: Optional[MapType]
-    """use ConvertedType MAP"""
+    """Use ConvertedType MAP."""
     var LIST: Optional[ListType]
-    """use ConvertedType LIST"""
+    """Use ConvertedType LIST."""
     var ENUM: Optional[EnumType]
-    """use ConvertedType ENUM"""
+    """Use ConvertedType ENUM."""
     var DECIMAL: Optional[DecimalType]
-    """use ConvertedType DECIMAL + SchemaElement.{scale, precision}"""
+    """Use ConvertedType DECIMAL + SchemaElement.{scale, precision}."""
     var DATE: Optional[DateType]
-    """use ConvertedType DATE"""
+    """Use ConvertedType DATE."""
     var TIME: Optional[TimeType]
     var TIMESTAMP: Optional[TimestampType]
     var INTEGER: Optional[IntType]
-    """use ConvertedType INT_* or UINT_*"""
+    """Use ConvertedType INT_* or UINT_*."""
     var UNKNOWN: Optional[NullType]
-    """no compatible ConvertedType"""
+    """No compatible ConvertedType."""
     var JSON: Optional[JsonType]
-    """use ConvertedType JSON"""
+    """Use ConvertedType JSON."""
     var BSON: Optional[BsonType]
-    """use ConvertedType BSON"""
+    """Use ConvertedType BSON."""
     var UUID: Optional[UUIDType]
-    """no compatible ConvertedType"""
+    """No compatible ConvertedType."""
     var FLOAT16: Optional[Float16Type]
-    """no compatible ConvertedType"""
+    """No compatible ConvertedType."""
     var VARIANT: Optional[VariantType]
-    """no compatible ConvertedType"""
+    """No compatible ConvertedType."""
     var GEOMETRY: Optional[GeometryType]
-    """no compatible ConvertedType"""
+    """No compatible ConvertedType."""
     var GEOGRAPHY: Optional[GeographyType]
-    """no compatible ConvertedType"""
+    """No compatible ConvertedType."""
     var FILE: Optional[FileType]
-    """no compatible ConvertedType"""
+    """No compatible ConvertedType."""
 
     def __init__(out self):
         self.STRING = None
@@ -2307,7 +2307,7 @@ struct SchemaElement(Copyable, Defaultable, Movable):
 
 
 struct DataPageHeader(Copyable, Defaultable, Movable):
-    """Data page header"""
+    """Data page header."""
 
     var num_values: Int32
     var encoding: Encoding
@@ -3108,7 +3108,7 @@ struct PageHeader(Copyable, Defaultable, Movable):
 
 
 struct KeyValue(Copyable, Defaultable, Movable):
-    """Wrapper struct to store key values"""
+    """Wrapper struct to store key values."""
 
     var key: String
     var value: Optional[String]
@@ -3163,7 +3163,7 @@ struct KeyValue(Copyable, Defaultable, Movable):
 
 
 struct SortingColumn(Copyable, Defaultable, Movable):
-    """Sort order within a RowGroup of a leaf column"""
+    """Sort order within a RowGroup of a leaf column."""
 
     var column_idx: Int32
     var descending: Bool
@@ -3231,7 +3231,7 @@ struct SortingColumn(Copyable, Defaultable, Movable):
 
 
 struct PageEncodingStats(Copyable, Defaultable, Movable):
-    """statistics of a given page type and encoding"""
+    """Statistics of a given page type and encoding."""
 
     var page_type: PageType
     var encoding: Encoding
@@ -3299,7 +3299,7 @@ struct PageEncodingStats(Copyable, Defaultable, Movable):
 
 
 struct ColumnMetaData(Copyable, Defaultable, Movable):
-    """Description for column metadata"""
+    """Description for column metadata."""
 
     var type_: Type
     var encodings: List[Encoding]
@@ -4057,7 +4057,7 @@ struct RowGroup(Copyable, Defaultable, Movable):
 
 struct TypeDefinedOrder(Copyable, Defaultable, Movable):
     """Empty struct to signal the order defined by the physical or logical
-    type
+    type.
     """
 
     var _empty: Bool
@@ -4091,7 +4091,7 @@ struct TypeDefinedOrder(Copyable, Defaultable, Movable):
 
 
 struct IEEE754TotalOrder(Copyable, Defaultable, Movable):
-    """Empty struct to signal IEEE 754 total order for floating point types
+    """Empty struct to signal IEEE 754 total order for floating point types.
     """
 
     var _empty: Bool
@@ -4125,7 +4125,7 @@ struct IEEE754TotalOrder(Copyable, Defaultable, Movable):
 
 
 struct Int96TimestampOrder(Copyable, Defaultable, Movable):
-    """Empty struct to signal chronological ordering of physical type INT96
+    """Empty struct to signal chronological ordering of physical type INT96.
     """
 
     var _empty: Bool
@@ -4398,7 +4398,7 @@ struct ColumnIndex(Copyable, Defaultable, Movable):
     """Optional statistics for each data page in a ColumnChunk. Forms part
     the page index, along with OffsetIndex. If this structure is present,
     OffsetIndex must also be present. For each field in this structure,
-    <field>[i] refers to the page at OffsetIndex.page_locations[i]
+    <field>[i] refers to the page at OffsetIndex.page_locations[i].
     """
 
     var null_pages: List[Bool]
@@ -4821,7 +4821,7 @@ struct EncryptionAlgorithm(Copyable, Defaultable, Movable):
 
 
 struct FileMetaData(Copyable, Defaultable, Movable):
-    """Description for file metadata"""
+    """Description for file metadata."""
 
     var version: Int32
     var schema: List[SchemaElement]
@@ -5019,7 +5019,7 @@ struct FileMetaData(Copyable, Defaultable, Movable):
 
 
 struct FileCryptoMetaData(Copyable, Defaultable, Movable):
-    """Crypto metadata for files with encrypted footer"""
+    """Crypto metadata for files with encrypted footer."""
 
     var encryption_algorithm: EncryptionAlgorithm
     var key_metadata: Optional[List[UInt8]]

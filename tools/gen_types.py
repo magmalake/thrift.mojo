@@ -215,11 +215,19 @@ def mojo_field(name):
 
 
 def wrap_doc(doc, indent, width=76):
+    """Reflow an IDL comment into a Mojo docstring the linter is happy with."""
     if not doc:
         return []
     text = " ".join(doc.split())
     if not text:
         return []
+    # Mojo's doc linter wants a summary that starts with a capital (or a
+    # non-letter) and ends with terminal punctuation. Parquet's IDL comments
+    # are prose fragments, so nudge them into shape.
+    if text[0].isalpha() and text[0].islower():
+        text = text[0].upper() + text[1:]
+    if text[-1] not in ".!?`":
+        text += "."
     pad = " " * indent
     lines = textwrap.wrap(text, width - indent - 3)
     if len(lines) == 1 and len(lines[0]) + indent + 6 < width:
