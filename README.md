@@ -1,5 +1,7 @@
 # thrift.mojo
 
+[![mojoshelf](https://mojoshelf.org/badge/thrift-mojo.svg)](https://mojoshelf.org/tins/thrift-mojo) [![mojo nightly](https://mojoshelf.org/badge/thrift-mojo/nightly.svg)](https://mojoshelf.org/tins/thrift-mojo)
+
 [![CI](https://github.com/magmalake/thrift.mojo/actions/workflows/ci.yml/badge.svg)](https://github.com/magmalake/thrift.mojo/actions/workflows/ci.yml) [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
 > Part of **magmalake** — data lake building blocks in Mojo.
