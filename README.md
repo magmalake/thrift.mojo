@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/magmalake/thrift.mojo/actions/workflows/ci.yml/badge.svg)](https://github.com/magmalake/thrift.mojo/actions/workflows/ci.yml) [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-> Part of **magmalake** — data lake building blocks in Mojo.
+> Part of [**magmalake**](https://magmalake.org) — data lake building blocks in Mojo.
 
 A pure-[Mojo](https://www.modular.com/mojo) implementation of Apache Thrift
 *serialization* — `TCompactProtocol` and `TBinaryProtocol` — plus every
