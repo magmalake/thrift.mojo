@@ -1,0 +1,117 @@
+{
+  "hosts": {
+    "linux-x86_64-amd-epyc-9v74-80-core-processor-2c": {
+      "cpu": "AMD EPYC 9V74 80-Core Processor",
+      "os": "linux",
+      "arch": "x86_64",
+      "physical_cores": 2,
+      "logical_cores": 4,
+      "performance_cores": 2,
+      "memory_bytes": 16766414848,
+      "accelerator": false
+    }
+  },
+  "runs": [
+    {
+      "commit": "937c96b7e1a09f12fe36e571b59bf8c5f86565e3",
+      "short_commit": "937c96b",
+      "timestamp": "2026-09-01T20:25:43Z",
+      "ref": "main",
+      "host": "linux-x86_64-amd-epyc-9v74-80-core-processor-2c",
+      "config": {
+        "min_runtime_secs": 1.0,
+        "num_warmup_iters": 2,
+        "num_repetitions": 3,
+        "max_iters": 100000000
+      },
+      "results": {
+        "bench_read_footer_large": {
+          "mean_ns": 127761463.77777778,
+          "min_ns": 127033142.55555555,
+          "max_ns": 129019580.0,
+          "median_ns": 127231668.77777778,
+          "stddev_ns": 1094072.8891127396,
+          "iters": 9,
+          "reps": 3,
+          "throughput": 0.0003913543139030375,
+          "throughput_unit": "GElems/s",
+          "throughput_metric": "elements",
+          "throughput_count": 50000
+        },
+        "bench_write_footer_large": {
+          "mean_ns": 9619239.840000002,
+          "min_ns": 9576918.272,
+          "max_ns": 9640556.232,
+          "median_ns": 9640245.016,
+          "stddev_ns": 36651.88333951844,
+          "iters": 125,
+          "reps": 3,
+          "throughput": 0.005197915930121979,
+          "throughput_unit": "GElems/s",
+          "throughput_metric": "elements",
+          "throughput_count": 50000
+        },
+        "bench_read_footer_small": {
+          "mean_ns": 31542.95417930013,
+          "min_ns": 31519.758698327878,
+          "max_ns": 31555.214403650447,
+          "median_ns": 31553.88943592207,
+          "stddev_ns": 20.098796929690362,
+          "iters": 33311,
+          "reps": 3,
+          "throughput": 0.00031702801022240453,
+          "throughput_unit": "GElems/s",
+          "throughput_metric": "elements",
+          "throughput_count": 10
+        },
+        "bench_write_footer_small": {
+          "mean_ns": 3166.280285029127,
+          "min_ns": 3165.487243221935,
+          "max_ns": 3167.314728329902,
+          "median_ns": 3166.038883535544,
+          "stddev_ns": 0.9373534369642404,
+          "iters": 365296,
+          "reps": 3,
+          "throughput": 0.0031582800951899964,
+          "throughput_unit": "GElems/s",
+          "throughput_metric": "elements",
+          "throughput_count": 10
+        },
+        "bench_skip_footer": {
+          "mean_ns": 1742521.0106434447,
+          "min_ns": 1734750.0972423803,
+          "max_ns": 1756717.566037736,
+          "median_ns": 1736095.3686502178,
+          "stddev_ns": 12312.963801927277,
+          "iters": 689,
+          "reps": 3,
+          "throughput": 0.045530584432209274,
+          "throughput_unit": "GB/s",
+          "throughput_metric": "bytes",
+          "throughput_count": 79338
+        },
+        "bench_read_i64_varints": {
+          "mean_ns": 218070.75962171544,
+          "min_ns": 217778.77823666728,
+          "max_ns": 218653.54085114025,
+          "median_ns": 217779.95977733884,
+          "stddev_ns": 504.70369528763723,
+          "iters": 5569,
+          "reps": 3,
+          "throughput": 0.04585667522480718,
+          "throughput_unit": "GElems/s",
+          "throughput_metric": "elements",
+          "throughput_count": 10000
+        }
+      }
+    }
+  ],
+  "benchmarks": [
+    "bench_read_footer_large",
+    "bench_read_footer_small",
+    "bench_read_i64_varints",
+    "bench_skip_footer",
+    "bench_write_footer_large",
+    "bench_write_footer_small"
+  ]
+}
