@@ -331,6 +331,14 @@ Submodules are `thrift.protocol`, `thrift.parquet_types` and
 
 ## Install
 
+```sh
+pixi shelf add thrift-mojo
+```
+
+That resolves the tin from [mojoshelf](https://mojoshelf.org) and adds it — along with the tins it depends on — as **pixi git source dependencies**. magmalake tins are not published to a conda channel, so `pixi add thrift-mojo` will not find them.
+
+As a dependency declaration, or for a nightly consumer:
+
 As a pixi source dependency:
 
 ```toml
