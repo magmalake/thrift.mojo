@@ -264,25 +264,40 @@ exercised by the fixed-len columns.
 
 ## Performance
 
-`pixi run bench`, single-threaded, Apple M4:
+`pixi run -e bench bench`, single-threaded, Apple M4, through
+[bench.mojo](https://github.com/magmalake/bench.mojo) — mean of three timed
+repetitions, spread under 0.2% on every row:
 
-| | |
-|---|---|
-| `read_footer` on a real 1,000-column × 50-row-group pyarrow file (50,000 column chunks, 5.0 MiB footer) | **78 ms** — 640k chunks/s, 64 MB/s |
-| `write_footer` for the same metadata | **8 ms** |
-| `read_footer` on the synthesised equivalent the bench builds (3.9 MiB) | 52 ms — 962k chunks/s |
-| `skip()` over a 77 KiB footer, no allocation | 0.65 ms — 121 MB/s |
-| 10,000 zigzag i64 varints | 0.19 ms — 53 M values/s |
+| benchmark | time | rate |
+|---|---|---|
+| `read_footer`, synthesised 1,000 × 50 footer (50,000 chunks, 3.9 MiB) | 56.9 ms | 878 K chunks/s |
+| `write_footer`, same metadata | 2.68 ms | 18.7 M chunks/s |
+| `read_footer`, 10 columns × 1 row group | 13.3 µs | 753 K chunks/s |
+| `write_footer`, same | 1.45 µs | 6.9 M chunks/s |
+| `skip()` over a 77 KiB footer, no allocation | 804 µs | 98.6 MB/s |
+| 10,000 zigzag i64 varints | 76.3 µs | 131 M values/s |
 
-The bench synthesises its wide footer in Mojo rather than shipping a
-multi-megabyte fixture; the real-file numbers above were measured
-separately against a pyarrow-written file and are the honest ones to quote.
+```sh
+pixi run -e bench bench                 # the table above
+pixi run -e bench bench -- --json       # every repetition, for tracking
+pixi run -e bench bench -- --only bench_read_footer_large
+```
+
+**On a real file**, separately measured against a pyarrow-written
+1,000-column × 50-row-group Parquet file (50,000 column chunks, 5.0 MiB
+footer): `read_footer` **78 ms** — 640k chunks/s, 64 MB/s — and
+`write_footer` **8 ms**. Those are the honest numbers to quote; the bench
+synthesises its wide footer in Mojo rather than shipping a multi-megabyte
+fixture, and its 3.9 MiB result is a little smaller and correspondingly
+faster.
+
 Decoding is allocation-bound — a footer that size is 50,000 `ColumnChunk`
 structs with their `Statistics` and `path_in_schema` — which is why pure
-`skip()` is about twice as fast per byte.
+`skip()` is far cheaper per byte and why `write_footer` is more than twenty
+times faster than the matching read.
 
-A normal footer is microseconds: ten columns in one row group parse in
-0.011 ms.
+Figures before 2026-09-01 came from a single cold pass each and moved by up
+to 2.5x in both directions; these are means over calibrated repetitions.
 
 ## Regenerating the Parquet structs
 

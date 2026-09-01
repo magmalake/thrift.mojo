@@ -1,4 +1,4 @@
-"""Benchmarks — `pixi run bench`.
+"""Benchmarks — `pixi run -e bench bench`.
 
 The headline number is footer parsing: a Parquet file with 1,000 columns and
 50 row groups has 50,000 `ColumnChunk`s in its footer, which is where every
@@ -6,9 +6,14 @@ reader spends its first few milliseconds. The footer here is synthesised in
 Mojo with the same shape and field population pyarrow writes for such a file
 (measured against a real one — see the README), so the benchmark needs no
 multi-megabyte fixture in the repository.
+
+Synthesising that footer is not cheap, and the harness re-enters a benchmark
+body once per phase. Only what is inside `b.iter` is timed, so the cost is
+wall-clock only -- but it is why the large-footer benchmarks run with fewer
+repetitions than the default.
 """
 
-from std.time import perf_counter_ns
+from bench import Benchmark, BenchSuite, Metric, keep
 
 from thrift.parquet_footer import read_footer_bytes, write_footer
 from thrift.parquet_types import (
@@ -34,7 +39,7 @@ from thrift.protocol import (
 )
 
 
-def synth_footer(columns: Int, row_groups: Int) raises -> FileMetaData:
+def _synth_footer(columns: Int, row_groups: Int) raises -> FileMetaData:
     var meta = FileMetaData()
     meta.version = 2
     meta.created_by = String("thrift.mojo bench")
@@ -100,104 +105,141 @@ def synth_footer(columns: Int, row_groups: Int) raises -> FileMetaData:
     return meta^
 
 
-def ms(ns: Int) -> String:
-    var whole = ns // 1000000
-    var frac = (ns % 1000000) // 1000
-    var pad = String()
-    if frac < 100:
-        pad += "0"
-    if frac < 10:
-        pad += "0"
-    return String(whole, ".", pad, frac, " ms")
+comptime LARGE_COLUMNS = 1000
+comptime LARGE_ROW_GROUPS = 50
+comptime SMALL_COLUMNS = 10
+comptime SMALL_ROW_GROUPS = 1
+comptime VARINTS = 10_000
 
 
-def bench_footer(columns: Int, row_groups: Int, rounds: Int) raises:
-    var meta = synth_footer(columns, row_groups)
+# ── footer round trip ───────────────────────────────────────────────────────
+#
+# The count declared for throughput is column chunks, so the rate column reads
+# as chunks/s -- the same figure the old bench printed by hand, and the one
+# that says how a reader will scale with footer size.
+
+
+def bench_read_footer_large(mut b: Benchmark) raises:
+    var meta = _synth_footer(LARGE_COLUMNS, LARGE_ROW_GROUPS)
     var body = write_footer(meta)
-    var chunks = columns * row_groups
+    b.throughput(Metric.elements(), LARGE_COLUMNS * LARGE_ROW_GROUPS)
 
-    var t0 = perf_counter_ns()
-    for _ in range(rounds):
+    @parameter
+    def call() raises:
         var again = read_footer_bytes(Span(body))
-        if len(again.row_groups) != row_groups:
-            raise Error(String("bad decode"))
-    var t1 = perf_counter_ns()
-    var per_read = (t1 - t0) // rounds
+        keep(len(again.row_groups))
 
-    var t2 = perf_counter_ns()
-    for _ in range(rounds):
+    b.iter[call]()
+    keep(body)
+
+
+def bench_write_footer_large(mut b: Benchmark) raises:
+    var meta = _synth_footer(LARGE_COLUMNS, LARGE_ROW_GROUPS)
+    b.throughput(Metric.elements(), LARGE_COLUMNS * LARGE_ROW_GROUPS)
+
+    @parameter
+    def call() raises:
         var out = write_footer(meta)
-        if len(out) != len(body):
-            raise Error(String("bad encode"))
-        _ = out^
-    var t3 = perf_counter_ns()
-    var per_write = (t3 - t2) // rounds
+        keep(len(out))
 
-    print(
-        String(
-            columns, " columns x ", row_groups, " row groups = ", chunks,
-            " column chunks, footer ", len(body) // 1024, " KiB",
-        )
-    )
-    print(String("  read_footer  ", ms(per_read), "  (", chunks * 1000000000 // (per_read if per_read > 0 else 1), " chunks/s)"))
-    print(String("  write_footer ", ms(per_write)))
-    _ = body^
+    b.iter[call]()
+    keep(meta.num_rows)
 
 
-def bench_skip(rounds: Int) raises:
-    """How fast the recursive skipper steps over a footer it ignores."""
-    var meta = synth_footer(100, 10)
+def bench_read_footer_small(mut b: Benchmark) raises:
+    var meta = _synth_footer(SMALL_COLUMNS, SMALL_ROW_GROUPS)
     var body = write_footer(meta)
-    var t0 = perf_counter_ns()
-    for _ in range(rounds):
+    b.throughput(Metric.elements(), SMALL_COLUMNS * SMALL_ROW_GROUPS)
+
+    @parameter
+    def call() raises:
+        var again = read_footer_bytes(Span(body))
+        keep(len(again.row_groups))
+
+    b.iter[call]()
+    keep(body)
+
+
+def bench_write_footer_small(mut b: Benchmark) raises:
+    var meta = _synth_footer(SMALL_COLUMNS, SMALL_ROW_GROUPS)
+    b.throughput(Metric.elements(), SMALL_COLUMNS * SMALL_ROW_GROUPS)
+
+    @parameter
+    def call() raises:
+        var out = write_footer(meta)
+        keep(len(out))
+
+    b.iter[call]()
+    keep(meta.num_rows)
+
+
+# ── skipping and primitives ─────────────────────────────────────────────────
+
+
+def bench_skip_footer(mut b: Benchmark) raises:
+    """How fast the recursive skipper steps over a footer it ignores."""
+    var meta = _synth_footer(100, 10)
+    var body = write_footer(meta)
+    b.throughput(Metric.bytes(), len(body))
+
+    @parameter
+    def call() raises:
         var r = TCompactProtocolReader(Span(body))
         r.skip(T_STRUCT)
-        if r.remaining() != 0:
-            raise Error(String("skip did not consume the footer"))
-    var t1 = perf_counter_ns()
-    var per = (t1 - t0) // rounds
-    print(
-        String(
-            "skip over a 100 x 10 footer (", len(body) // 1024, " KiB): ",
-            ms(per),
-            "  (",
-            len(body) * 1000 // (per if per > 0 else 1),
-            " MB/s)",
-        )
-    )
-    _ = body^
+        keep(r.remaining())
+
+    b.iter[call]()
+    keep(body)
 
 
-def bench_primitives(rounds: Int) raises:
+def bench_read_i64_varints(mut b: Benchmark) raises:
     var w = TCompactProtocolWriter()
-    for i in range(10000):
+    for i in range(VARINTS):
         w.write_i64(Int64(i) * Int64(-7919))
     var buf = w^.take()
-    var t0 = perf_counter_ns()
-    for _ in range(rounds):
+    b.throughput(Metric.elements(), VARINTS)
+
+    @parameter
+    def call() raises:
         var r = TCompactProtocolReader(Span(buf))
         var acc = Int64(0)
-        for _ in range(10000):
+        for _ in range(VARINTS):
             acc += r.read_i64()
-        if acc == Int64(1):
-            raise Error(String("impossible"))
-    var t1 = perf_counter_ns()
-    var per = (t1 - t0) // rounds
+        keep(acc)
+
+    b.iter[call]()
+    keep(buf)
+
+
+def _print_shape() raises:
+    """Footer sizes and the correctness checks the old bench folded into its
+    timing loops. Neither belongs inside a timed region."""
+    var large = _synth_footer(LARGE_COLUMNS, LARGE_ROW_GROUPS)
+    var large_body = write_footer(large)
+    var small_body = write_footer(_synth_footer(SMALL_COLUMNS, SMALL_ROW_GROUPS))
+    var skip_body = write_footer(_synth_footer(100, 10))
+
+    var again = read_footer_bytes(Span(large_body))
+    if len(again.row_groups) != LARGE_ROW_GROUPS:
+        raise Error("large footer did not round trip")
+    if len(write_footer(large)) != len(large_body):
+        raise Error("write_footer is not deterministic")
+
+    var r = TCompactProtocolReader(Span(skip_body))
+    r.skip(T_STRUCT)
+    if r.remaining() != 0:
+        raise Error("skip did not consume the footer")
+
     print(
-        String(
-            "10,000 zigzag i64 varints: ", ms(per), "  (",
-            10000 * 1000 // (per if per > 0 else 1), " M values/s)",
-        )
+        "footers: large", LARGE_COLUMNS, "x", LARGE_ROW_GROUPS, "=",
+        LARGE_COLUMNS * LARGE_ROW_GROUPS, "chunks,", len(large_body) // 1024,
+        "KiB | small", len(small_body), "B | skip target",
+        len(skip_body) // 1024, "KiB",
     )
-    _ = buf^
 
 
 def main() raises:
-    print("thrift.mojo benchmarks")
-    print("")
-    bench_footer(1000, 50, 3)
-    print("")
-    bench_footer(10, 1, 200)
-    print("")
-    bench_skip(20)
-    bench_primitives(200)
+    _print_shape()
+    # Three repetitions, not five: synthesising the 50,000-chunk footer runs
+    # once per phase and dominates wall-clock time.
+    BenchSuite.run[__functions_in_module()](num_repetitions=3)
