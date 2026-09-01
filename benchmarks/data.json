@@ -13,6 +13,99 @@
   },
   "runs": [
     {
+      "commit": "fa42180cb0cdeec1f8dacf7433c5aebb2e332aba",
+      "short_commit": "fa42180",
+      "timestamp": "2026-09-01T21:14:38Z",
+      "ref": "main",
+      "host": "linux-x86_64-amd-epyc-9v74-80-core-processor-2c",
+      "config": {
+        "min_runtime_secs": 1.0,
+        "num_warmup_iters": 2,
+        "num_repetitions": 3,
+        "max_iters": 100000000
+      },
+      "results": {
+        "bench_read_footer_large": {
+          "mean_ns": 126716716.96296294,
+          "min_ns": 126677353.33333333,
+          "max_ns": 126764953.44444445,
+          "median_ns": 126707844.1111111,
+          "stddev_ns": 44468.983479036826,
+          "iters": 9,
+          "reps": 3,
+          "throughput": 0.0003945809297964539,
+          "throughput_unit": "GElems/s",
+          "throughput_metric": "elements",
+          "throughput_count": 50000
+        },
+        "bench_write_footer_large": {
+          "mean_ns": 9756780.70189702,
+          "min_ns": 9706738.845528455,
+          "max_ns": 9849423.479674798,
+          "median_ns": 9714179.780487806,
+          "stddev_ns": 80317.21536541457,
+          "iters": 123,
+          "reps": 3,
+          "throughput": 0.00512464116266121,
+          "throughput_unit": "GElems/s",
+          "throughput_metric": "elements",
+          "throughput_count": 50000
+        },
+        "bench_read_footer_small": {
+          "mean_ns": 31384.952236331108,
+          "min_ns": 31383.885848933107,
+          "max_ns": 31386.67461709648,
+          "median_ns": 31384.296242963737,
+          "stddev_ns": 1.5056734177059385,
+          "iters": 38195,
+          "reps": 3,
+          "throughput": 0.0003186240311821802,
+          "throughput_unit": "GElems/s",
+          "throughput_metric": "elements",
+          "throughput_count": 10
+        },
+        "bench_write_footer_small": {
+          "mean_ns": 3162.567404265781,
+          "min_ns": 3162.3737704486184,
+          "max_ns": 3162.799546903401,
+          "median_ns": 3162.5288954453254,
+          "stddev_ns": 0.21548455699066535,
+          "iters": 379610,
+          "reps": 3,
+          "throughput": 0.0031619879426163858,
+          "throughput_unit": "GElems/s",
+          "throughput_metric": "elements",
+          "throughput_count": 10
+        },
+        "bench_skip_footer": {
+          "mean_ns": 1676823.7180925666,
+          "min_ns": 1674592.2650771388,
+          "max_ns": 1680210.391304348,
+          "median_ns": 1675668.497896213,
+          "stddev_ns": 2981.901382132044,
+          "iters": 713,
+          "reps": 3,
+          "throughput": 0.047314454789707514,
+          "throughput_unit": "GB/s",
+          "throughput_metric": "bytes",
+          "throughput_count": 79338
+        },
+        "bench_read_i64_varints": {
+          "mean_ns": 217684.78336325553,
+          "min_ns": 217568.7499102334,
+          "max_ns": 217773.9145421903,
+          "median_ns": 217711.68563734292,
+          "stddev_ns": 105.19472807515943,
+          "iters": 5570,
+          "reps": 3,
+          "throughput": 0.04593798356274069,
+          "throughput_unit": "GElems/s",
+          "throughput_metric": "elements",
+          "throughput_count": 10000
+        }
+      }
+    },
+    {
       "commit": "937c96b7e1a09f12fe36e571b59bf8c5f86565e3",
       "short_commit": "937c96b",
       "timestamp": "2026-09-01T20:25:43Z",
