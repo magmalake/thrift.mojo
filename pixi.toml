@@ -10,7 +10,6 @@ platforms = ["osx-arm64", "linux-64"]
 [tasks]
 # Pure Mojo, stdlib only — consumers just `-I ../thrift.mojo/src`.
 test = { cmd = "mkdir -p build && mojo build tests/test_thrift.mojo -I src -I tests -o build/thrift-test && ./build/thrift-test" }
-bench = { cmd = "mkdir -p build && mojo build bench/bench_thrift.mojo -I src -o build/thrift-bench && ./build/thrift-bench" }
 cli = { cmd = "mkdir -p build && mojo build src/main.mojo -I src -o build/thrift-mojo && ./build/thrift-mojo" }
 # Regenerate tests/fixtures/*.parquet + the pyarrow oracle JSON (needs `uv`).
 fixtures = { cmd = "bash tools/gen_fixtures.sh" }
@@ -45,6 +44,18 @@ modular = ">=26.6.0.dev2026082605,<27"
 [feature.stable.dependencies]
 mojo-compiler = "==1.0.0"
 
+# Benchmarks run through the shared harness (magmalake/bench.mojo) and get
+# their own feature, so the tin stays out of the environments that run tests.
+# -I $CONDA_PREFIX/lib/mojo is what puts its precompiled package on the import
+# path. Stable only: a precompiled Mojo package is stamped with the compiler
+# version that built it and refused by any other, and tins build with 1.0.0.
+[feature.bench.dependencies]
+bench-mojo = { git = "https://github.com/magmalake/bench.mojo", rev = "3334bd5b5dd4de27c93db37c926e06364c4fbe72" }
+
+[feature.bench.tasks]
+bench = "mojo run -I src -I $CONDA_PREFIX/lib/mojo bench/bench_thrift.mojo"
+
 [environments]
 default = ["nightly"]
 stable = ["stable"]
+bench = ["stable", "bench"]
