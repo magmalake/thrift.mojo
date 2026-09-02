@@ -283,6 +283,13 @@ pixi run -e bench bench -- --json       # every repetition, for tracking
 pixi run -e bench bench -- --only bench_read_footer_large
 ```
 
+Every push to `main` re-runs these on a GitHub runner and appends to a history
+published at
+[magmalake.github.io/thrift.mojo/benchmarks](https://magmalake.github.io/thrift.mojo/benchmarks/).
+Those numbers are slower and noisier than the table above, which was taken on
+an M4 — each history is keyed by machine, so the two stay separate series and
+are never averaged together.
+
 **On a real file**, separately measured against a pyarrow-written
 1,000-column × 50-row-group Parquet file (50,000 column chunks, 5.0 MiB
 footer): `read_footer` **78 ms** — 640k chunks/s, 64 MB/s — and
