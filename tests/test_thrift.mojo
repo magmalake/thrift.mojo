@@ -1087,7 +1087,14 @@ def test_unknown_fields_are_skipped() raises:
     _ = spliced^
 
 
-def test_union_requires_exactly_one_member() raises:
+def test_union_with_no_known_member_is_tolerated() raises:
+    """A union whose every field id is unknown reads as empty, not as an error.
+
+    That is what an older reader sees when a newer writer uses a member added
+    after that reader was built — parquet-testing's `unknown-logical-type`
+    file is exactly this case — and such a file is still expected to read,
+    with the column falling back to its physical type.
+    """
     var w = TCompactProtocolWriter()
     w.write_struct_begin()
     w.write_field_stop()
@@ -1095,7 +1102,32 @@ def test_union_requires_exactly_one_member() raises:
     var buf = w^.take()
     var r = TCompactProtocolReader(Span(buf))
     var lt = LogicalType()
-    with assert_raises(contains="exactly one member"):
+    lt.read(r)
+    assert_false(Bool(lt.STRING))
+    assert_false(Bool(lt.MAP))
+    _ = buf^
+
+
+def test_union_rejects_more_than_one_member() raises:
+    """Two members set is malformed however new the writer was."""
+    var w = TCompactProtocolWriter()
+    w.write_struct_begin()
+    w.write_field_begin(T_STRUCT, 1)  # STRING
+    w.write_struct_begin()
+    w.write_field_stop()
+    w.write_struct_end()
+    w.write_field_end()
+    w.write_field_begin(T_STRUCT, 2)  # MAP
+    w.write_struct_begin()
+    w.write_field_stop()
+    w.write_struct_end()
+    w.write_field_end()
+    w.write_field_stop()
+    w.write_struct_end()
+    var buf = w^.take()
+    var r = TCompactProtocolReader(Span(buf))
+    var lt = LogicalType()
+    with assert_raises(contains="at most one member"):
         lt.read(r)
     _ = buf^
 

@@ -1384,8 +1384,8 @@ struct TimeUnit(Copyable, Defaultable, Movable):
                 p.skip(_head[0])
             p.read_field_end()
         p.read_struct_end()
-        if _set_count != 1:
-            raise Error(String("parquet.TimeUnit: a union must have exactly one member set, got ", _set_count))
+        if _set_count > 1:
+            raise Error(String("parquet.TimeUnit: a union must have at most one member set, got ", _set_count))
 
     def write[W: TProtocolWriter, //](self, mut p: W) raises:
         """Encode this `TimeUnit`, fields in ascending id order."""
@@ -2043,8 +2043,8 @@ struct LogicalType(Copyable, Defaultable, Movable):
                 p.skip(_head[0])
             p.read_field_end()
         p.read_struct_end()
-        if _set_count != 1:
-            raise Error(String("parquet.LogicalType: a union must have exactly one member set, got ", _set_count))
+        if _set_count > 1:
+            raise Error(String("parquet.LogicalType: a union must have at most one member set, got ", _set_count))
 
     def write[W: TProtocolWriter, //](self, mut p: W) raises:
         """Encode this `LogicalType`, fields in ascending id order."""
@@ -2711,8 +2711,8 @@ struct BloomFilterAlgorithm(Copyable, Defaultable, Movable):
                 p.skip(_head[0])
             p.read_field_end()
         p.read_struct_end()
-        if _set_count != 1:
-            raise Error(String("parquet.BloomFilterAlgorithm: a union must have exactly one member set, got ", _set_count))
+        if _set_count > 1:
+            raise Error(String("parquet.BloomFilterAlgorithm: a union must have at most one member set, got ", _set_count))
 
     def write[W: TProtocolWriter, //](self, mut p: W) raises:
         """Encode this `BloomFilterAlgorithm`, fields in ascending id order."""
@@ -2795,8 +2795,8 @@ struct BloomFilterHash(Copyable, Defaultable, Movable):
                 p.skip(_head[0])
             p.read_field_end()
         p.read_struct_end()
-        if _set_count != 1:
-            raise Error(String("parquet.BloomFilterHash: a union must have exactly one member set, got ", _set_count))
+        if _set_count > 1:
+            raise Error(String("parquet.BloomFilterHash: a union must have at most one member set, got ", _set_count))
 
     def write[W: TProtocolWriter, //](self, mut p: W) raises:
         """Encode this `BloomFilterHash`, fields in ascending id order."""
@@ -2876,8 +2876,8 @@ struct BloomFilterCompression(Copyable, Defaultable, Movable):
                 p.skip(_head[0])
             p.read_field_end()
         p.read_struct_end()
-        if _set_count != 1:
-            raise Error(String("parquet.BloomFilterCompression: a union must have exactly one member set, got ", _set_count))
+        if _set_count > 1:
+            raise Error(String("parquet.BloomFilterCompression: a union must have at most one member set, got ", _set_count))
 
     def write[W: TProtocolWriter, //](self, mut p: W) raises:
         """Encode this `BloomFilterCompression`, fields in ascending id order."""
@@ -3743,8 +3743,8 @@ struct ColumnCryptoMetaData(Copyable, Defaultable, Movable):
                 p.skip(_head[0])
             p.read_field_end()
         p.read_struct_end()
-        if _set_count != 1:
-            raise Error(String("parquet.ColumnCryptoMetaData: a union must have exactly one member set, got ", _set_count))
+        if _set_count > 1:
+            raise Error(String("parquet.ColumnCryptoMetaData: a union must have at most one member set, got ", _set_count))
 
     def write[W: TProtocolWriter, //](self, mut p: W) raises:
         """Encode this `ColumnCryptoMetaData`, fields in ascending id order."""
@@ -4217,8 +4217,8 @@ struct ColumnOrder(Copyable, Defaultable, Movable):
                 p.skip(_head[0])
             p.read_field_end()
         p.read_struct_end()
-        if _set_count != 1:
-            raise Error(String("parquet.ColumnOrder: a union must have exactly one member set, got ", _set_count))
+        if _set_count > 1:
+            raise Error(String("parquet.ColumnOrder: a union must have at most one member set, got ", _set_count))
 
     def write[W: TProtocolWriter, //](self, mut p: W) raises:
         """Encode this `ColumnOrder`, fields in ascending id order."""
@@ -4800,8 +4800,8 @@ struct EncryptionAlgorithm(Copyable, Defaultable, Movable):
                 p.skip(_head[0])
             p.read_field_end()
         p.read_struct_end()
-        if _set_count != 1:
-            raise Error(String("parquet.EncryptionAlgorithm: a union must have exactly one member set, got ", _set_count))
+        if _set_count > 1:
+            raise Error(String("parquet.EncryptionAlgorithm: a union must have at most one member set, got ", _set_count))
 
     def write[W: TProtocolWriter, //](self, mut p: W) raises:
         """Encode this `EncryptionAlgorithm`, fields in ascending id order."""

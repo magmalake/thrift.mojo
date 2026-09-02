@@ -501,10 +501,16 @@ class Emitter:
                 ' field %s"))' % (s.name, f.name)
             )
         if s.is_union and s.fields:
-            a("        if _set_count != 1:")
+            # Zero members set means every field id in the payload was one we
+            # do not recognise, which is exactly what an older reader sees when
+            # a newer writer uses a member added after that reader was built.
+            # Thrift wants that tolerated — the caller falls back to whatever
+            # it used before the union existed — so only a genuinely malformed
+            # union, with more than one member, is an error here.
+            a("        if _set_count > 1:")
             a(
                 '            raise Error(String("parquet.%s: a union must have'
-                ' exactly one member set, got ", _set_count))' % s.name
+                ' at most one member set, got ", _set_count))' % s.name
             )
         a("")
 
