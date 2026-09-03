@@ -16,6 +16,10 @@ fixtures = { cmd = "bash tools/gen_fixtures.sh" }
 # Regenerate src/thrift/parquet_types.mojo from spec/parquet.thrift.
 gen-types = { cmd = "python3 tools/gen_types.py spec/parquet.thrift src/thrift/parquet_types.mojo" }
 
+# mojolint (lint-mojo, below): the origin and threading mistakes the compiler
+# lets through, with mojo-lsp-server behind the rules. Exit 1 on findings.
+lint = { cmd = "mojolint --lsp -I src -I tests src tests" }
+
 # ── pixi-build: consumable as a pixi source dependency ──────────────────────
 # Conda package name is thrift-mojo; the Mojo import stays `from thrift import …`.
 [package]
@@ -59,3 +63,9 @@ bench = "mojo run -I src -I $CONDA_PREFIX/lib/mojo bench/bench_thrift.mojo"
 default = ["nightly"]
 stable = ["stable"]
 bench = ["stable", "bench"]
+
+[dependencies]
+# Added by `pixi shelf add lint-mojo`: the linter comes from GitHub as a pixi
+# source dependency pinned at the revision mojoshelf published, and builds
+# the `mojolint` executable into every environment next to mojo-lsp-server.
+lint-mojo = { git = "https://github.com/magmalake/lint.mojo.git", rev = "2a12807b7847984aff2c8bf148b0eb7515a99844" }
