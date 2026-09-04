@@ -294,7 +294,7 @@ def test_truncated_compact_struct() raises:
         var part = List[UInt8](capacity=cut)
         part.extend(Span(full)[0:cut])
         var r = TCompactProtocolReader(Span(part))
-        var raised = False
+        var raised: Bool
         try:
             r.skip(T_STRUCT)
             # A prefix may also simply run out of bytes mid-struct without
@@ -313,7 +313,7 @@ def test_truncated_binary_struct() raises:
         var part = List[UInt8](capacity=cut)
         part.extend(Span(full)[0:cut])
         var r = TBinaryProtocolReader(Span(part))
-        var raised = False
+        var raised: Bool
         try:
             r.skip(T_STRUCT)
             raised = r.remaining() != 0
@@ -659,7 +659,7 @@ def test_fixtures_match_the_oracle() raises:
 
 
 def test_footer_round_trip_is_semantically_identical() raises:
-    """write_footer(read_footer(x)) must decode back to the same metadata."""
+    """`write_footer(read_footer(x))` must decode back to the same metadata."""
     for name in fixture_names():
         var path = fixture_path(name)
         var data = read_parquet_file(path)
