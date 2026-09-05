@@ -370,7 +370,7 @@ As a pixi source dependency:
 thrift-mojo = { git = "https://github.com/magmalake/thrift.mojo" }
 ```
 
-Note that the package's `.mojopkg` is built with stable Mojo 1.0.0 and the
+Note that the compiled package `.mojoc` is built with stable Mojo 1.0.0 and the
 nightly compiler will not load it, so a nightly consumer should put the
 source on the include path instead — `-I ../thrift.mojo/src` — and check the
 repository out next to its own.
