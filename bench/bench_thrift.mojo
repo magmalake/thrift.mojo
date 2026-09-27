@@ -124,12 +124,11 @@ def bench_read_footer_large(mut b: Benchmark) raises:
     var body = write_footer(meta)
     b.throughput(Metric.elements(), LARGE_COLUMNS * LARGE_ROW_GROUPS)
 
-    @parameter
-    def call() raises:
+    def call() raises {imm body}:
         var again = read_footer_bytes(Span(body))
         keep(len(again.row_groups))
 
-    b.iter[call]()
+    b.iter(call)
     keep(body)
 
 
@@ -137,12 +136,11 @@ def bench_write_footer_large(mut b: Benchmark) raises:
     var meta = _synth_footer(LARGE_COLUMNS, LARGE_ROW_GROUPS)
     b.throughput(Metric.elements(), LARGE_COLUMNS * LARGE_ROW_GROUPS)
 
-    @parameter
-    def call() raises:
+    def call() raises {imm meta}:
         var out = write_footer(meta)
         keep(len(out))
 
-    b.iter[call]()
+    b.iter(call)
     keep(meta.num_rows)
 
 
@@ -151,12 +149,11 @@ def bench_read_footer_small(mut b: Benchmark) raises:
     var body = write_footer(meta)
     b.throughput(Metric.elements(), SMALL_COLUMNS * SMALL_ROW_GROUPS)
 
-    @parameter
-    def call() raises:
+    def call() raises {imm body}:
         var again = read_footer_bytes(Span(body))
         keep(len(again.row_groups))
 
-    b.iter[call]()
+    b.iter(call)
     keep(body)
 
 
@@ -164,12 +161,11 @@ def bench_write_footer_small(mut b: Benchmark) raises:
     var meta = _synth_footer(SMALL_COLUMNS, SMALL_ROW_GROUPS)
     b.throughput(Metric.elements(), SMALL_COLUMNS * SMALL_ROW_GROUPS)
 
-    @parameter
-    def call() raises:
+    def call() raises {imm meta}:
         var out = write_footer(meta)
         keep(len(out))
 
-    b.iter[call]()
+    b.iter(call)
     keep(meta.num_rows)
 
 
@@ -182,13 +178,12 @@ def bench_skip_footer(mut b: Benchmark) raises:
     var body = write_footer(meta)
     b.throughput(Metric.bytes(), len(body))
 
-    @parameter
-    def call() raises:
+    def call() raises {imm body}:
         var r = TCompactProtocolReader(Span(body))
         r.skip(T_STRUCT)
         keep(r.remaining())
 
-    b.iter[call]()
+    b.iter(call)
     keep(body)
 
 
@@ -199,15 +194,14 @@ def bench_read_i64_varints(mut b: Benchmark) raises:
     var buf = w^.take()
     b.throughput(Metric.elements(), VARINTS)
 
-    @parameter
-    def call() raises:
+    def call() raises {imm buf}:
         var r = TCompactProtocolReader(Span(buf))
         var acc = Int64(0)
         for _ in range(VARINTS):
             acc += r.read_i64()
         keep(acc)
 
-    b.iter[call]()
+    b.iter(call)
     keep(buf)
 
 
