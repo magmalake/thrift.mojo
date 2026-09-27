@@ -181,7 +181,7 @@ row group 0: 70 rows, 2255 bytes uncompressed, 3 column(s) offset=4
 
 ## Tests
 
-`pixi run test` — 49 tests, no network, no fixtures to download.
+`pixi run test` — no network, no fixtures to download.
 
 **Wire vectors from Apache Thrift itself.** `tools/gen_vectors.py` defines
 thirteen small programs of protocol calls — i32 and i64 at their boundaries,
@@ -245,7 +245,7 @@ Beyond metadata parity the suite:
 - proves the generated structs are protocol-agnostic by round-tripping a
   real `FileMetaData` through `TBinaryProtocol`.
 
-Both `default` (nightly) and `stable` (Mojo 1.0.0) run the same 49 tests on
+Both `default` (nightly) and `stable` (Mojo 1.1.0) run the same tests on
 Linux and macOS.
 
 ### Fixture provenance
@@ -370,7 +370,7 @@ As a pixi source dependency:
 thrift-mojo = { git = "https://github.com/magmalake/thrift.mojo" }
 ```
 
-Note that the compiled package `.mojoc` is built with stable Mojo 1.0.0 and the
+Note that the compiled package `.mojoc` is built with stable Mojo 1.1.0 and the
 nightly compiler will not load it, so a nightly consumer should put the
 source on the include path instead — `-I ../thrift.mojo/src` — and check the
 repository out next to its own.
@@ -379,7 +379,7 @@ repository out next to its own.
 
 | task | what it does |
 |---|---|
-| `pixi run test` | the test suite (`-e stable` for Mojo 1.0.0) |
+| `pixi run test` | the test suite (`-e stable` for Mojo 1.1.0) |
 | `pixi run bench` | the benchmarks above |
 | `pixi run cli parquet-meta f.parquet` | build and run the CLI |
 | `pixi run gen-types` | regenerate `parquet_types.mojo` from `spec/parquet.thrift` |
