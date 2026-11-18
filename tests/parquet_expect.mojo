@@ -6,15 +6,11 @@ is a line-by-line diff and a failure names the exact field.
 """
 
 from thrift.parquet_types import (
-    CompressionCodec,
     Encoding,
-    ConvertedType,
     FieldRepetitionType,
     FileMetaData,
     LogicalType,
-    SchemaElement,
     TimeUnit,
-    Type,
 )
 
 
