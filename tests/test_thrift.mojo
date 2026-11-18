@@ -14,7 +14,6 @@ from thrift.protocol import (
     T_BOOL,
     T_BYTE,
     T_DOUBLE,
-    T_I16,
     T_I32,
     T_I64,
     T_LIST,

@@ -20,7 +20,6 @@ from thrift.parquet_types import (
     FieldRepetitionType,
     FileMetaData,
     LogicalType,
-    PageType,
     SchemaElement,
     Statistics,
     TimeUnit,

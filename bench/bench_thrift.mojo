@@ -30,9 +30,6 @@ from thrift.parquet_types import (
     Type,
 )
 from thrift.protocol import (
-    T_I32,
-    T_STOP,
-    T_STRING,
     T_STRUCT,
     TCompactProtocolReader,
     TCompactProtocolWriter,

@@ -24,7 +24,6 @@ from thrift.protocol import (
     T_STOP,
     T_STRING,
     T_STRUCT,
-    T_UUID,
     TProtocolReader,
     TProtocolWriter,
     type_name,

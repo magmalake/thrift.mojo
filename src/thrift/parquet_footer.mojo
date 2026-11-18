@@ -15,7 +15,6 @@ print(meta.num_rows, len(meta.row_groups))
 ```
 """
 
-from std.memory import bitcast
 
 from thrift.parquet_types import FileMetaData, PageHeader
 from thrift.protocol import TCompactProtocolReader, TCompactProtocolWriter
