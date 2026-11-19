@@ -24,7 +24,7 @@ comptime PARQUET_MAGIC_ENCRYPTED = "PARE"
 comptime FOOTER_TRAILER_SIZE = 8
 
 
-def read_parquet_file(path: StringSlice) raises -> List[UInt8]:
+def read_parquet_file(path: StringSpan) raises -> List[UInt8]:
     """Slurp a whole file. Convenience for the CLI and the tests."""
     with open(String(path), "r") as f:
         return f.read_bytes()
@@ -122,7 +122,7 @@ def write_footer_trailer(mut out: List[UInt8], metadata_length: Int) raises:
         )
     for i in range(4):
         out.append(UInt8((metadata_length >> (8 * i)) & 0xFF))
-    out.extend(StringSlice(PARQUET_MAGIC).as_bytes())
+    out.extend(StringSpan(PARQUET_MAGIC).as_bytes())
 
 
 def read_page_header(

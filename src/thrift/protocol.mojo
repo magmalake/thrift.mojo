@@ -195,7 +195,7 @@ trait TProtocolWriter:
     """The write half of the Thrift protocol surface."""
 
     def write_message_begin(
-        mut self, name: StringSlice, mtype: Int8, seqid: Int32
+        mut self, name: StringSpan, mtype: Int8, seqid: Int32
     ) raises: ...
     def write_message_end(mut self) raises: ...
     def write_struct_begin(mut self) raises: ...
@@ -218,7 +218,7 @@ trait TProtocolWriter:
     def write_i64(mut self, value: Int64) raises: ...
     def write_double(mut self, value: Float64) raises: ...
     def write_binary(mut self, value: Span[UInt8, _]) raises: ...
-    def write_string(mut self, value: StringSlice) raises: ...
+    def write_string(mut self, value: StringSpan) raises: ...
     def write_uuid(mut self, value: Span[UInt8, _]) raises: ...
 
 
@@ -426,7 +426,7 @@ struct TCompactProtocolReader[origin: ImmOrigin](
             shift += 7
         return result
 
-    def _check_container(self, size: Int, what: StringSlice) raises:
+    def _check_container(self, size: Int, what: StringSpan) raises:
         if size < 0:
             raise Error(
                 String("thrift.compact: negative ", what, " size ", size)
@@ -693,7 +693,7 @@ struct TCompactProtocolWriter(Copyable, Movable, Defaultable, Sized, TProtocolWr
             v >>= UInt64(7)
 
     def write_message_begin(
-        mut self, name: StringSlice, mtype: Int8, seqid: Int32
+        mut self, name: StringSpan, mtype: Int8, seqid: Int32
     ) raises:
         self.out.append(COMPACT_PROTOCOL_ID)
         self.out.append(
@@ -806,7 +806,7 @@ struct TCompactProtocolWriter(Copyable, Movable, Defaultable, Sized, TProtocolWr
         self._varint(UInt64(len(value)))
         self.out.extend(value)
 
-    def write_string(mut self, value: StringSlice) raises:
+    def write_string(mut self, value: StringSpan) raises:
         self.write_binary(value.as_bytes())
 
     def write_uuid(mut self, value: Span[UInt8, _]) raises:
@@ -879,7 +879,7 @@ struct TBinaryProtocolReader[origin: ImmOrigin](
         self.pos += 1
         return b
 
-    def _check_container(self, size: Int, what: StringSlice) raises:
+    def _check_container(self, size: Int, what: StringSpan) raises:
         if size < 0:
             raise Error(
                 String("thrift.binary: negative ", what, " size ", size)
@@ -1110,7 +1110,7 @@ struct TBinaryProtocolWriter(Copyable, Movable, Defaultable, Sized, TProtocolWri
             self.out.append(UInt8((v >> UInt64(56 - 8 * i)) & UInt64(0xFF)))
 
     def write_message_begin(
-        mut self, name: StringSlice, mtype: Int8, seqid: Int32
+        mut self, name: StringSpan, mtype: Int8, seqid: Int32
     ) raises:
         if self.strict_write:
             self._put_u32(
@@ -1191,7 +1191,7 @@ struct TBinaryProtocolWriter(Copyable, Movable, Defaultable, Sized, TProtocolWri
         self.write_i32(Int32(len(value)))
         self.out.extend(value)
 
-    def write_string(mut self, value: StringSlice) raises:
+    def write_string(mut self, value: StringSpan) raises:
         self.write_binary(value.as_bytes())
 
     def write_uuid(mut self, value: Span[UInt8, _]) raises:

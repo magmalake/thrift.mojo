@@ -27,7 +27,7 @@ from thrift.protocol import (
 )
 
 
-def unhex(text: StringSlice) raises -> List[UInt8]:
+def unhex(text: StringSpan) raises -> List[UInt8]:
     var out = List[UInt8]()
     var raw = text.as_bytes()
     if len(raw) % 2 != 0:

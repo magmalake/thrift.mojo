@@ -50,7 +50,7 @@ def hex_of(data: Span[UInt8, _]) -> String:
     return out^
 
 
-def json_string(s: StringSlice) -> String:
+def json_string(s: StringSpan) -> String:
     var out = String('"')
     for cp in s.codepoint_slices():
         if cp == '"':
@@ -269,7 +269,7 @@ def path_text(cm: ColumnMetaData) -> String:
     return out^
 
 
-def print_text(path: StringSlice, meta: FileMetaData, data: Span[UInt8, _], pages: Bool) raises:
+def print_text(path: StringSpan, meta: FileMetaData, data: Span[UInt8, _], pages: Bool) raises:
     print(String("file:        ", path))
     print(String("version:     ", meta.version))
     if meta.created_by:
@@ -397,7 +397,7 @@ def print_pages(data: Span[UInt8, _], cm: ColumnMetaData) raises:
 # ── JSON output ────────────────────────────────────────────────────────────
 
 
-def print_json(path: StringSlice, meta: FileMetaData, data: Span[UInt8, _], pages: Bool) raises:
+def print_json(path: StringSpan, meta: FileMetaData, data: Span[UInt8, _], pages: Bool) raises:
     var out = String("{\n")
     out += String('  "file": ', json_string(path), ",\n")
     out += String('  "version": ', meta.version, ",\n")

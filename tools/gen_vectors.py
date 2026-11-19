@@ -560,7 +560,7 @@ def main():
     a(")")
     a("")
     a("")
-    a("def unhex(text: StringSlice) raises -> List[UInt8]:")
+    a("def unhex(text: StringSpan) raises -> List[UInt8]:")
     a("    var out = List[UInt8]()")
     a("    var raw = text.as_bytes()")
     a("    if len(raw) % 2 != 0:")

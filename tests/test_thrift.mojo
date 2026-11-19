@@ -618,16 +618,16 @@ def fixture_names() -> List[String]:
     ]
 
 
-def fixture_path(name: StringSlice) -> String:
+def fixture_path(name: StringSpan) -> String:
     return String("tests/fixtures/", name, ".parquet")
 
 
-def read_text(path: StringSlice) raises -> String:
+def read_text(path: StringSpan) raises -> String:
     with open(String(path), "r") as f:
         return f.read()
 
 
-def diff_report(name: StringSlice, got: String, want: String) raises -> String:
+def diff_report(name: StringSpan, got: String, want: String) raises -> String:
     var gl = got.split("\n")
     var wl = want.split("\n")
     var out = String("fixture '", name, "' does not match its oracle\n")
