@@ -245,8 +245,8 @@ Beyond metadata parity the suite:
 - proves the generated structs are protocol-agnostic by round-tripping a
   real `FileMetaData` through `TBinaryProtocol`.
 
-Both `default` (nightly) and `stable` (Mojo 1.2.0) run the same tests on
-Linux and macOS.
+The tests run on the pinned Mojo nightly, `1.3.0.dev2026111805`, on Linux and
+macOS.
 
 ### Fixture provenance
 
@@ -361,8 +361,6 @@ Working with a coding agent? `npx skills add mojoshelf/mojoshelf --skill mojoshe
 
 That resolves the tin from [mojoshelf](https://mojoshelf.org) and adds it — along with the tins it depends on — as **pixi git source dependencies**. magmalake tins are not published to a conda channel, so `pixi add thrift-mojo` will not find them.
 
-As a dependency declaration, or for a nightly consumer:
-
 As a pixi source dependency:
 
 ```toml
@@ -370,16 +368,17 @@ As a pixi source dependency:
 thrift-mojo = { git = "https://github.com/magmalake/thrift.mojo" }
 ```
 
-Note that the compiled package `.mojoc` is built with stable Mojo 1.2.0 and the
-nightly compiler will not load it, so a nightly consumer should put the
-source on the include path instead — `-I ../thrift.mojo/src` — and check the
-repository out next to its own.
+Note that the compiled package `.mojoc` is built with
+`mojo-compiler ==1.3.0.dev2026111805` and no other compiler will load it, so a
+consumer pins that same compiler — or puts the source on the include path
+instead, `-I ../thrift.mojo/src`, with the repository checked out next to its
+own.
 
 ## Tasks
 
 | task | what it does |
 |---|---|
-| `pixi run test` | the test suite (`-e stable` for Mojo 1.2.0) |
+| `pixi run test` | the test suite |
 | `pixi run bench` | the benchmarks above |
 | `pixi run cli parquet-meta f.parquet` | build and run the CLI |
 | `pixi run gen-types` | regenerate `parquet_types.mojo` from `spec/parquet.thrift` |
