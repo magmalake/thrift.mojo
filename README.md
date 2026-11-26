@@ -245,7 +245,7 @@ Beyond metadata parity the suite:
 - proves the generated structs are protocol-agnostic by round-tripping a
   real `FileMetaData` through `TBinaryProtocol`.
 
-The tests run on the pinned Mojo nightly, `1.3.0.dev2026112505`, on Linux and
+The tests run on the pinned Mojo nightly, `1.3.0.dev2026112605`, on Linux and
 macOS.
 
 ### Fixture provenance
@@ -369,7 +369,7 @@ thrift-mojo = { git = "https://github.com/magmalake/thrift.mojo" }
 ```
 
 Note that the compiled package `.mojoc` is built with
-`mojo-compiler ==1.3.0.dev2026112505` and no other compiler will load it, so a
+`mojo-compiler ==1.3.0.dev2026112605` and no other compiler will load it, so a
 consumer pins that same compiler — or puts the source on the include path
 instead, `-I ../thrift.mojo/src`, with the repository checked out next to its
 own.
